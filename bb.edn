@@ -1,0 +1,77 @@
+{:deps {io.github.FieryCod/holy-lambda-babashka-tasks
+        {:local/root "../holy-lambda/modules/holy-lambda-babashka-tasks"}}
+
+
+ ;; Minimal babashka version which should be used in conjuction with holy-lambda
+ :min-bb-version                                    "0.3.7"
+
+ :holy-lambda/options {
+                       ;; User should use docker for local development and use `HL_NO_DOCKER` environment variable
+                       ;; set to "true" for CI based deployments.
+                       ;; For CI based deployments user should base it's builder image on `fierycod/graalvm-native-image:ce`
+                       :docker {
+
+                                ;; Check https://docs.docker.com/network/
+                                ;; Network setting for future versions of HL will propagate to AWS SAM as well
+                                ;; Options: "host"|"bridge"|"overlay"|"none"|nil|"macvlan"
+                                :network            nil
+
+                                ;; HL runs bb tasks in docker context which means that local libraries will not work out-of-the-box.
+                                ;;
+                                ;; To make local libraries work with HL you have to:
+                                ;; 1. Mount your local library folder as a docker volume.
+                                ;; 2. Modify the `deps.edn` to use library path available in docker context.
+                                ;; Preferably use `deps.edn` alias and reference it's name in `:build:clj-name`
+                                ;; ----------------------------------------------------------------------------
+                                ;; Single volume definition:
+                                ;;
+                                ;; {:docker "/path-where-to-mount-local-library-on-docker"
+                                ;;  :host   "relative-local-library-path"}
+                                :volumes [{:docker     "/holy-lambda"
+                                           :host       "../../../../"}]
+
+                                ;; GraalVM Community holy-lambda compatible docker image
+                                ;; You can always build your own GraalVM image with enterprise edition
+                                :image              "fierycod/graalvm-native-image:ce"}
+                       :build {:compile-cmd "clojure -X:uberjar"
+
+                               :graalvm-home nil}
+
+                       :runtime
+                       {
+
+                        ;; :pods                {org.babashka/aws "0.0.5"}
+
+                        ;; For `:native` runtime you can provide your own bootstrap file
+                        :bootstrap-file "bootstrap"
+
+                        ;; For `:native` runtime you can provide some native resources which will be available during lambda execution
+                        ;; Resources are packed as is.
+                        :native-deps "resources"
+
+                        ;; Specify custom arguments for native image generation
+                        ;; Works only on `:native` runtime.
+                        ;; Check https://www.graalvm.org/reference-manual/native-image/Options/
+                        :native-image-args
+                        ["--verbose"
+                         "--no-fallback"
+                         "--enable-url-protocols=http,https"
+                         "--report-unsupported-elements-at-runtime"
+                         "-H:+AllowIncompleteClasspath"
+                         "--no-server"
+                         "--initialize-at-build-time"]}}
+
+ :tasks {:requires                                ([holy-lambda.tasks])
+
+         hl:docker:run             holy-lambda.tasks/hl:docker:run
+
+         hl:native:conf            holy-lambda.tasks/hl:native:conf
+         hl:native:executable      holy-lambda.tasks/hl:native:executable
+
+         hl:sync                   holy-lambda.tasks/hl:sync
+         hl:compile                holy-lambda.tasks/hl:compile
+         hl:doctor                 holy-lambda.tasks/hl:doctor
+         hl:clean                  holy-lambda.tasks/hl:clean
+         hl:version                holy-lambda.tasks/hl:version
+         }
+ }
