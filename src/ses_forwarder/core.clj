@@ -2,7 +2,7 @@
   (:require [cognitect.aws.client.api :as aws])
   (:import (java.io ByteArrayInputStream)
            (java.util Properties)
-           (jakarta.mail Session Transport)
+           (jakarta.mail Message$RecipientType Session Transport)
            (jakarta.mail.internet MimeMessage)))
 
 (defn create-aws-client [service]
@@ -34,6 +34,16 @@
        .getBytes
        (ByteArrayInputStream.)
        (MimeMessage. session)))
+
+(defn create-message-from-s3 [session s3-client s3-bucket s3-key]
+  (->> (get-object s3-client s3-bucket s3-key)
+       (create-message session)))
+
+(defn fixup-recipients [address msg]
+  (doto msg
+    (.setRecipients Message$RecipientType/TO address)
+    (.setRecipients Message$RecipientType/CC "")
+    (.setRecipients Message$RecipientType/BCC "")))
 
 (defn send-message [username password msg]
   (Transport/send msg username password))

@@ -1,66 +1,32 @@
-# basic.example
+# SES Forwarder
 
-To build:
+## Building
 
 ``` sh
 clojure -X:uberjar
 ```
 
-All the stuff belong is confusing, enraging, and probably not necessary. ;)
+## Deploying
 
-## First steps
-  1. Run `bb stack:sync` to download dependencies
-  2. Run `bb stack:doctor` to validate if current state of application is fine
-  
-## Run
-
-### Java runtime
-``` sh
-bb stack:compile && bb stack:invoke
-```
-
-### Native runtime
+The first time you deploy, you need to create the function:
 
 ``` sh
-bb stack:compile && bb native:executable && bb stack:invoke
+export AWS_ACCOUNT=$(aws sts get-caller-identity | jq -r .Account)
+
+aws lambda create-function \
+  --function-name ses-forwarder \
+  --handler ses_forwarder.handler \
+  --runtime java11 \
+  --memory 2048 \
+  --timeout 10 \
+  --role arn:aws:iam::${AWS_ACCOUNT}:role/mail-forwarder \
+  --zip-file fileb://./build/output.jar
 ```
 
-
-### Babashka runtime
+Subsequently, you can just update the function code:
 
 ``` sh
-bb stack:invoke
+aws lambda update-function-code \
+  --function-name ses-forwarder \
+  --zip-file fileb://./build/output.jar
 ```
-
-## Clean
-
-``` sh
-bb stack:prune
-```
-
-## Deploy application
-
-``` sh
-bb stack:pack && bb stack:deploy
-```
-
-## Destroy application
-
-``` sh
-bb stack:destroy
-```
-
-## Getting help
-  - [HL Docs](https://cljdoc.org/d/io.github.FieryCod/holy-lambda/CURRENT)
-  - [HL Slack](https://clojurians.slack.com/archives/C01UQJ4JC9Y)
-  - [GraalVM Clojure Docs](https://github.com/lread/clj-graal-docs/blob/master/doc/testing-strategies.md)
-  - [Clojure GraalVM Slack](https://clojurians.slack.com/archives/CAJN79WNT)
-  - [Official GraalVM Channel](https://graalvm.slack.com/ssb/redirect)
-
-## License
-
-Copyright © 2021 FIXME
-
-Distributed under the Eclipse Public License either version 1.0 or (at
-your option) any later version.
-

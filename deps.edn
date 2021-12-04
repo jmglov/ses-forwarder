@@ -1,11 +1,17 @@
-{:deps {org.clojure/clojure            {:mvn/version "1.10.3"}
-        io.github.FieryCod/holy-lambda {:mvn/version "0.6.0"}}
+{:deps {org.clojure/clojure {:mvn/version "1.10.3"}
+        org.clojure/data.json {:mvn/version "2.4.0"}
+        com.amazonaws/aws-lambda-java-core {:mvn/version "1.1.0"}
+        com.cognitect.aws/api {:mvn/version "0.8.524"}
+        com.cognitect.aws/endpoints {:mvn/version "1.1.12.93"}
+        com.cognitect.aws/s3 {:mvn/version "814.2.991.0"}
+        com.cognitect.aws/ssm {:mvn/version "814.2.1028.0"}
+        com.sun.mail/jakarta.mail {:mvn/version "2.0.1"}}
  :paths ["src"]
  :aliases {:uberjar
            {:replace-deps {com.github.seancorfield/depstar {:mvn/version "2.1.303"}}
-            :exec-fn      hf.depstar/uberjar
-            :exec-args    {:aot        ["basic.example.core"]
-                           :main-class "basic.example.core"
-                           :jar        ".holy-lambda/build/output.jar"
-                           :jvm-opts   ["-Dclojure.compiler.direct-linking=true"
-                                        "-Dclojure.spec.skip-macros=true"]}}}}
+            :exec-fn hf.depstar/uberjar
+            :exec-args {:aot ["ses-forwarder.handler"]
+                        :main-class "ses-forwarder.handler"
+                        :jar "build/output.jar"
+                        :jvm-opts ["-Dclojure.compiler.direct-linking=true"
+                                   "-Dclojure.spec.skip-macros=true"]}}}}
